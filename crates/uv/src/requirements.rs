@@ -142,7 +142,7 @@ impl RequirementsSpecification {
     pub(crate) async fn from_source(
         source: &RequirementsSource,
         extras: &ExtrasSpecification<'_>,
-        client_builder: BaseClientBuilder,
+        client_builder: &BaseClientBuilder,
     ) -> Result<Self> {
         Ok(match source {
             RequirementsSource::Package(name) => {
@@ -281,7 +281,7 @@ impl RequirementsSpecification {
         constraints: &[RequirementsSource],
         overrides: &[RequirementsSource],
         extras: &ExtrasSpecification<'_>,
-        client_builder: BaseClientBuilder,
+        client_builder: &BaseClientBuilder,
     ) -> Result<Self> {
         let mut spec = Self::default();
 
@@ -289,7 +289,7 @@ impl RequirementsSpecification {
         // A `requirements.txt` can contain a `-c constraints.txt` directive within it, so reading
         // a requirements file can also add constraints.
         for source in requirements {
-            let source = Self::from_source(source, extras, client_builder.clone()).await?;
+            let source = Self::from_source(source, extras, client_builder).await?;
             spec.requirements.extend(source.requirements);
             spec.constraints.extend(source.constraints);
             spec.overrides.extend(source.overrides);
@@ -316,7 +316,7 @@ impl RequirementsSpecification {
 
         // Read all constraints, treating _everything_ as a constraint.
         for source in constraints {
-            let source = Self::from_source(source, extras, client_builder.clone()).await?;
+            let source = Self::from_source(source, extras, client_builder).await?;
             spec.constraints.extend(source.requirements);
             spec.constraints.extend(source.constraints);
             spec.constraints.extend(source.overrides);
@@ -336,7 +336,7 @@ impl RequirementsSpecification {
 
         // Read all overrides, treating both requirements _and_ constraints as overrides.
         for source in overrides {
-            let source = Self::from_source(source, extras, client_builder.clone()).await?;
+            let source = Self::from_source(source, extras, client_builder).await?;
             spec.overrides.extend(source.requirements);
             spec.overrides.extend(source.constraints);
             spec.overrides.extend(source.overrides);
@@ -360,7 +360,7 @@ impl RequirementsSpecification {
     /// Read the requirements from a set of sources.
     pub(crate) async fn from_simple_sources(
         requirements: &[RequirementsSource],
-        client_builder: BaseClientBuilder,
+        client_builder: &BaseClientBuilder,
     ) -> Result<Self> {
         Self::from_sources(
             requirements,
@@ -458,7 +458,7 @@ pub(crate) async fn read_lockfile(
     let requirements_txt = RequirementsTxt::parse(
         output_file,
         std::env::current_dir()?,
-        BaseClientBuilder::new().connectivity(Connectivity::Offline),
+        &BaseClientBuilder::new().connectivity(Connectivity::Offline),
     )
     .await?;
     let requirements = requirements_txt

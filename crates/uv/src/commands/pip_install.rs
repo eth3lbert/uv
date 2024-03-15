@@ -96,7 +96,14 @@ pub(crate) async fn pip_install(
         no_index,
         find_links,
         extras: used_extras,
-    } = specification(requirements, constraints, overrides, extras, client_builder).await?;
+    } = specification(
+        requirements,
+        constraints,
+        overrides,
+        extras,
+        &client_builder,
+    )
+    .await?;
 
     // Check that all provided extras are used
     if let ExtrasSpecification::Some(extras) = extras {
@@ -357,7 +364,7 @@ async fn specification(
     constraints: &[RequirementsSource],
     overrides: &[RequirementsSource],
     extras: &ExtrasSpecification<'_>,
-    client_builder: BaseClientBuilder,
+    client_builder: &BaseClientBuilder,
 ) -> Result<RequirementsSpecification, Error> {
     // If the user requests `extras` but does not provide a pyproject toml source
     if !matches!(extras, ExtrasSpecification::None)

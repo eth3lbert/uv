@@ -46,7 +46,7 @@ pub(crate) async fn pip_uninstall(
         no_index: _no_index,
         find_links: _find_links,
         extras: _extras,
-    } = RequirementsSpecification::from_simple_sources(sources, client_builder).await?;
+    } = RequirementsSpecification::from_simple_sources(sources, &client_builder).await?;
 
     // Detect the current Python interpreter.
     let venv = if let Some(python) = python.as_ref() {
