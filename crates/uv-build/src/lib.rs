@@ -9,6 +9,7 @@ use regex::Regex;
 use rustc_hash::FxHashMap;
 use serde::de::{value, SeqAccess, Visitor};
 use serde::{de, Deserialize, Deserializer};
+use std::borrow::Cow;
 use std::ffi::OsString;
 use std::fmt::{Display, Formatter};
 use std::io;
@@ -890,6 +891,13 @@ impl SourceBuild {
                 &self.version_id,
             ));
         }
+
+        if !output.stdout.is_empty() {
+            debug!(
+                "Building detail:\n{}",
+                IndentContent::from_bytes(&output.stdout).indent(2)
+            );
+        }
         Ok(distribution_filename)
     }
 }
@@ -1093,6 +1101,41 @@ impl PythonRunner {
             .output()
             .await
             .map_err(|err| Error::CommandFailed(venv.python_executable().to_path_buf(), err))
+    }
+}
+
+/// A conotent container which allow custom indention
+#[derive(Default)]
+struct IndentContent<'a> {
+    content: Cow<'a, str>,
+    indent: usize,
+}
+
+impl<'a> IndentContent<'a> {
+    fn from_bytes(output: &'a [u8]) -> Self {
+        Self {
+            content: String::from_utf8_lossy(output),
+            ..Default::default()
+        }
+    }
+
+    fn indent(&mut self, indent: usize) -> &Self {
+        self.indent = indent;
+        self
+    }
+}
+
+impl<'a> std::fmt::Display for IndentContent<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let indent = " ".repeat(self.indent);
+        let mut lines = self.content.trim().lines();
+        for line in lines.by_ref().take(1) {
+            write!(f, "{indent}{line}")?;
+        }
+        for line in lines {
+            write!(f, "\n{indent}{line}")?;
+        }
+        Ok(())
     }
 }
 
